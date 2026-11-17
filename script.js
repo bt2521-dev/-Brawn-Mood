@@ -82,23 +82,23 @@ const IMG={
   "food9": ["salat-z-buriakom-i-koziachym-syrom-1.jpg"]
 };
 const T={drinks:'🥤 Напої',sweets:'🍰 Солодке до чаю',food:'🥪 Сендвічі / салати'};
-const items={};for(const k in D)items[k]=D[k].split('\n').map((l,i)=>{const a=l.split('|');return{id:k+i,n:a[0],e:a[1],p:+a[2],v:a[3],k:a[4],b:a[5],f:a[6],c:a[7],s:a[8],o:a[9]}});
+const items={};for(const k in D)items[k]=D[k].split('\n').map((l,i)=>{const a=l.split('|');return{id:k+i,n:a[0],e:a[1],p:+a[2],v:a[3],k:a[4],b:a[5],f:a[6],c:a[7],s:a[8],o:a[9],im:IMG[k+i]||[]}});
 let cur='drinks',S={o:0,ph:'',used:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('ar')||'{}'))}catch(e){}
 const sv=()=>{try{localStorage.setItem('ar',JSON.stringify(S))}catch(e){}};
 const $=i=>document.getElementById(i);
 function go(i){document.querySelector('nav').classList.remove('on');$(i).scrollIntoView({behavior:'smooth'})}
 function toast(t){const e=$('ts');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',4000)}
-function card(x){return `<div class="card"><div class="pic">${IMG[x.id]?`<img src="${IMG[x.id][0]}" alt="${x.n}" loading="lazy">`:x.e}</div><div class="b"><h3>${x.n}</h3><small>${x.v} · ${x.k} ккал</small><div class="row"><span class="pr">${x.p} ₴</span></div><div class="bt"><button class="btn o" onclick="openP('${x.id}')">Детальніше</button><button class="btn" onclick="add('${x.id}')">🛒 В кошик</button></div></div></div>`}
+function card(x){return `<div class="card"><div class="pic">${x.im&&x.im[0]?`<img src="${x.im[0]}" alt="${esc(x.n)}" loading="lazy">`:x.e}</div><div class="b"><h3>${x.n}</h3><small>${x.v} · ${x.k} ккал</small><div class="row"><span class="pr">${x.p} ₴</span></div><div class="bt"><button class="btn o" onclick="openP('${x.id}')">Детальніше</button><button class="btn" onclick="add('${x.id}')">🛒 В кошик</button></div></div></div>`}
 function tabs(){$('tabs').innerHTML=Object.keys(T).map(k=>`<button class="tab ${k==cur?'on':''}" onclick="cur='${k}';$('q').value='';tabs()">${T[k]}</button>`).join('');
 const q=($('q').value||'').trim().toLowerCase(),so=$('so').value;
 let L=q?[].concat(...Object.values(items)).filter(x=>x.n.toLowerCase().includes(q)):items[cur].slice();
 if(so)L.sort((a,b)=>so=='a'?a.p-b.p:b.p-a.p);
 $('list').innerHTML=L.length?L.map(card).join(''):'<p style="color:var(--mu)">Нічого не знайдено 😔 Спробуйте іншу назву.</p>'}
-function find(id){return items[id.replace(/\d+$/,'')].find(x=>x.id==id)}
-function openP(id){const x=find(id),im=IMG[id],opts=x.o?x.o.split(';').map(s=>s.trim()):[];
+function find(id){return all().find(x=>x.id==id)}
+function openP(id){const x=find(id),im=x.im||[],opts=x.o?x.o.split(';').map(s=>s.trim()):[];
 $('mb').innerHTML=`<button class="x" onclick="md.classList.remove('on')">×</button><h2 style="color:var(--gold);margin-bottom:12px">${x.n}</h2>
-<img class="gm" id="gm" alt="${x.n}" src="${im[0]}"><div class="th">${im.map((s,i)=>`<img alt="" src="${s}" onclick="gm.src=this.src">`).join('')}</div>
+${im.length?`<img class="gm" id="gm" alt="${esc(x.n)}" src="${im[0]}">`:`<div class="gm" style="display:grid;place-items:center;font-size:90px;background:radial-gradient(circle,#5a3d24,#21170e)">${x.e}</div>`}<div class="th">${im.map((s,i)=>`<img alt="" src="${s}" onclick="gm.src=this.src">`).join('')}</div>
 <div class="kb"><span><b>${x.k}</b>ккал</span><span><b>${x.b} г</b>білки</span><span><b>${x.f} г</b>жири</span><span><b>${x.c} г</b>вуглеводи</span></div>
 <p><b>КБЖВ на порцію:</b> ${x.v}</p><p><b>Склад:</b> ${x.s}</p>
 ${opts.length?`<p><b>Варіанти:</b> ${opts.join('. ')}</p>`:''}
@@ -114,7 +114,7 @@ function days(){const a=[],n=new Date();for(let i=0;i<7;i++){if(i==0&&!slots(0).
 function totals(){const t=cart.reduce((s,c)=>s+find(c.id).p*c.q,0),d=S.ph&&!S.used?Math.round(t*.1):0;return{t,d,s:t-d}}
 function saveF(){['fn','ln'].forEach(k=>{if($(k))F[k]=$(k).value});if($('fp'))F.ph=$('fp').value;if($('fd'))F.day=$('fd').value;if($('ft'))F.tm=$('ft').value;if($('cm'))F.cm=$('cm').value}
 function setStep(n){saveF();step=n;drawCart();$('cart').scrollTop=0}
-function drawCart(){saveF();{const n=cart.reduce((s,c)=>s+c.q,0);document.querySelectorAll('.cc').forEach(e=>e.textContent=n)}
+function drawCart(){cart=cart.filter(c=>find(c.id));saveF();{const n=cart.reduce((s,c)=>s+c.q,0);document.querySelectorAll('.cc').forEach(e=>e.textContent=n)}
 const T0=totals();if(!cart.length)step=0;
 let o='<button class="x" onclick="toggleCart()">×</button><h2 style="color:var(--gold);margin-bottom:10px">Кошик</h2>';
 if(last)o+=`<div class="rev" style="margin-bottom:12px"><b>✅ Замовлення №${last.n} оплачено!</b><p style="margin:6px 0 0;font-size:14px">${esc(last.fn)} ${esc(last.ln)}, забрати: ${esc(last.day)} о ${esc(last.tm)}.<br>Сума: ${last.t} ₴. Назвіть номер замовлення на касі.</p></div>`;
@@ -165,6 +165,38 @@ function reg(id){const p=$(id||'ph').value.trim();if(p.replace(/\D/g,'').length<
 const R=[['Олена',5,'Найсмачніший раф у місті! Затишна атмосфера.'],['Андрій',5,'Бабл ті з манго — супер, а горішок як у дитинстві.'],['Марина',4,'Гарні десерти та привітний персонал.']];
 function revs(){$('revs').innerHTML=R.map(r=>`<div class="rev"><b>${r[0]}</b> <span class="st">${'★'.repeat(r[1])}${'☆'.repeat(5-r[1])}</span><p>${r[2]}</p></div>`).join('')}
 function addRev(){const n=$('rn').value.trim(),t=$('rt').value.trim();if(!n||!t){toast('Заповніть імʼя та відгук');return}R.unshift([n.replace(/</g,'&lt;'),+$('rs').value,t.replace(/</g,'&lt;')]);$('rn').value=$('rt').value='';revs();toast('Дякуємо за відгук!')}
-tabs();dots();revs();drawCart();const inView=()=>{const r=$('loy').getBoundingClientRect();return r.top<innerHeight&&r.bottom>0};
+const ADMIN_HASH=3704767632023602;
+const h53=(s,seed=0)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<s.length;i++){ch=s.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)};
+let ADM=false,A={cat:'drinks',id:'',del:null,im:[]};
+const all=()=>[].concat(...Object.values(items));
+const H2=t=>`<h2 style="color:var(--gold);margin-bottom:8px">${t}</h2>`;
+function openAdmin(){ADM?adminView():dlg(H2('🔒 Адмін-панель')+'<input id="apw" type="password" placeholder="Пароль" autocomplete="current-password"><button class="btn" style="width:100%;margin-top:8px" onclick="login()">Увійти</button>')}
+function login(){if(h53($('apw').value)!==ADMIN_HASH){toast('Невірний пароль');return}ADM=true;adminView()}
+function saveDraft(){try{localStorage.setItem('ar_menu',JSON.stringify(items))}catch(e){toast('Не вдалося зберегти зміни в цьому браузері')}}
+function adminView(){A.id='';dlg(H2('⚙️ Редагування меню')+`<div class="tabs">${Object.keys(T).map(k=>`<button class="tab ${k==A.cat?'on':''}" onclick="A.cat='${k}';A.del=null;adminView()">${T[k]}</button>`).join('')}</div>`+
+items[A.cat].map(x=>`<div class="ar"><span>${x.e} ${esc(x.n)} · ${x.p} ₴</span><button class="btn o" onclick="editItem('${x.id}')">✏️</button>${A.del==x.id?`<button class="btn" onclick="delItem('${x.id}')">Точно видалити?</button>`:`<button class="btn o" onclick="A.del='${x.id}';adminView()">🗑</button>`}</div>`).join('')+
+`<button class="btn" style="width:100%;margin-top:10px" onclick="editItem()">+ Додати позицію</button>
+<p class="demo">Зміни зберігаються лише в цьому браузері. Щоб їх побачили всі гості, натисніть «Завантажити menu.json» і завантажте цей файл у репозиторій на GitHub поруч з index.html (замінивши старий).</p>
+<button class="btn" style="width:100%" onclick="exportMenu()">⬇️ Завантажити menu.json для сайту</button><button class="btn o" style="width:100%;margin-top:8px" onclick="resetDraft()">↺ Скинути мої зміни</button>
+<p class="demo">Змінити пароль: <input id="np" placeholder="новий пароль" style="width:55%;display:inline-block"> <button class="btn o" style="padding:6px 10px" onclick="$('nh').textContent='const ADMIN_HASH='+h53($('np').value)+';'">Хеш</button><br><small id="nh"></small><br>Цим рядком замініть рядок з ADMIN_HASH у script.js.</p>`)}
+function editItem(id){const x=id?all().find(i=>i.id==id):{n:'',e:'🍽️',p:'',v:'',k:'',b:'',f:'',c:'',s:'',o:'',im:[]};A.id=id||'';A.im=(x.im||[]).slice();
+dlg(H2(id?'Редагувати позицію':'Нова позиція')+`<input id="a_n" placeholder="Назва" value="${esc(x.n)}"><input id="a_e" placeholder="Смайлик (якщо немає фото)" value="${esc(x.e)}"><input id="a_p" type="number" placeholder="Ціна, ₴" value="${esc(x.p)}"><input id="a_v" placeholder="Обʼєм або вага, напр. 200 мл" value="${esc(x.v)}">
+<div class="kb"><input id="a_k" placeholder="ккал" value="${esc(x.k)}"><input id="a_b" placeholder="Білки" value="${esc(x.b)}"><input id="a_f" placeholder="Жири" value="${esc(x.f)}"><input id="a_c" placeholder="Вугл." value="${esc(x.c)}"></div>
+<textarea id="a_s" rows="2" placeholder="Склад">${esc(x.s)}</textarea><textarea id="a_o" rows="2" placeholder="Варіанти через «;» (напр. молоко: коров'яче; вівсяне)">${esc(x.o)}</textarea>
+<label>Фото (до 3)</label><div class="pv" id="pv"></div><input id="a_i" type="file" accept="image/*" multiple onchange="addPh(this)">
+<button class="btn" style="width:100%;margin-top:8px" onclick="saveItem()">Зберегти</button><button class="btn o" style="width:100%;margin-top:8px" onclick="adminView()">← Назад</button>`);pv()}
+function pv(){$('pv').innerHTML=A.im.map((s,i)=>`<div><img src="${s}" alt=""><b onclick="A.im.splice(${i},1);pv()">×</b></div>`).join('')}
+function addPh(inp){[...inp.files].slice(0,Math.max(0,3-A.im.length)).forEach(f=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,560/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);A.im.push(c.toDataURL('image/jpeg',.72));pv()};im.src=r.result};r.readAsDataURL(f)});inp.value=''}
+function saveItem(){const g=i=>$(i).value.trim(),n=g('a_n'),p=+g('a_p');if(!n||!(p>0)){toast('Вкажіть назву та ціну');return}
+const o={n,e:g('a_e')||'🍽️',p,v:g('a_v'),k:g('a_k'),b:g('a_b'),f:g('a_f'),c:g('a_c'),s:g('a_s'),o:g('a_o'),im:A.im.slice()};
+if(A.id)Object.assign(all().find(i=>i.id==A.id),o);else{o.id=A.cat+'n'+Date.now();items[A.cat].push(o)}
+saveDraft();tabs();toast('Збережено');adminView()}
+function delItem(id){items[A.cat]=items[A.cat].filter(i=>i.id!=id);A.del=null;saveDraft();tabs();drawCart();adminView()}
+function exportMenu(){const b=new Blob([JSON.stringify(items,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='menu.json';document.body.appendChild(a);a.click();a.remove();toast('Файл menu.json завантажено')}
+function resetDraft(){try{localStorage.removeItem('ar_menu')}catch(e){}location.reload()}
+async function loadMenu(){let m=null;try{m=JSON.parse(localStorage.getItem('ar_menu')||'null')}catch(e){}
+if(!m){try{const r=await fetch('menu.json',{cache:'no-store'});if(r.ok)m=await r.json()}catch(e){}}
+if(m&&m.drinks&&m.sweets&&m.food){Object.assign(items,m);tabs();drawCart()}}
+tabs();dots();revs();drawCart();loadMenu();const inView=()=>{const r=$('loy').getBoundingClientRect();return r.top<innerHeight&&r.bottom>0};
 if(!S.ph){setTimeout(()=>{if(!inView())showSide(1)},1200);setTimeout(()=>showSide(0),10000)}
 try{new IntersectionObserver(e=>{if(e[0].isIntersecting)showSide(0)}).observe($('loy'))}catch(e){}
